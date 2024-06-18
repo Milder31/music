@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Música con Ecualizador y Spotify</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .player {
+            text-align: center;
+            border: 2px solid #ff1493;
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls, .upload, .equalizer, .spotify {
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff1493;
+            color: #ffffff;
+        }
+
+        button:hover {
+            background-color: #ff69b4;
+        }
+
+        .track-info {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #333333;
+        }
+
+        .equalizer label {
+            display: block;
+            margin: 5px 0;
+        }
+
+        .equalizer input {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="player">
+        <h2>Reproductor de Música con Ecualizador y Spotify</h2>
+        <audio id="audio" controls>
+            <source id="audioSource" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+        <div class="controls">
+            <button onclick="prevTrack()">Anterior</button>
+            <button onclick="playPause()">Reproducir/Pausar</button>
+            <button onclick="nextTrack()">Siguiente</button>
+        </div>
+        <div class="upload">
+            <input type="file" id="fileInput" accept="audio/*" multiple>
+        </div>
+        <div class="track-info">
+            <span id="trackTitle">Selecciona una canción</span>
+        </div>
+        <div class="equalizer">
+            <label>
+                <span>Bass</span>
+                <input type="range" min="-40" max="40" value="0" id="bass">
+            </label>
+            <label>
+                <span>Mid</span>
+                <input type="range" min="-40" max="40" value="0" id="mid">
+            </label>
+            <label>
+                <span>Treble</span>
+                <input type="range" min="-40" max="40" value="0" id="treble">
+            </label>
+        </div>
+        <div class="spotify">
+            <button onclick="authenticateSpotify()">Conectar con Spotify</button>
+            <ul id="spotifyPlaylist"></ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

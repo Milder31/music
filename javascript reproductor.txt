@@ -1,0 +1,144 @@
+const audio = document.getElementById('audio');
+const audioSource = document.getElementById('audioSource');
+const trackTitle = document.getElementById('trackTitle');
+const fileInput = document.getElementById('fileInput');
+
+const bassControl = document.getElementById('bass');
+const midControl = document.getElementById('mid');
+const trebleControl = document.getElementById('treble');
+
+let tracks = [];
+let currentTrack = 0;
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const audioElement = audioContext.createMediaElementSource(audio);
+const gainNode = audioContext.createGain();
+const bassEQ = audioContext.createBiquadFilter();
+const midEQ = audioContext.createBiquadFilter();
+const trebleEQ = audioContext.createBiquadFilter();
+
+bassEQ.type = 'lowshelf';
+midEQ.type = 'peaking';
+trebleEQ.type = 'highshelf';
+
+bassEQ.frequency.value = 200;
+midEQ.frequency.value = 1000;
+trebleEQ.frequency.value = 3000;
+
+audioElement.connect(bassEQ).connect(midEQ).connect(trebleEQ).connect(gainNode).connect(audioContext.destination);
+
+fileInput.addEventListener('change', (event) => {
+    const files = event.target.files;
+    tracks = [];
+    for (let i = 0; i < files.length; i++) {
+        tracks.push({ title: files[i].name, src: URL.createObjectURL(files[i]) });
+    }
+    currentTrack = 0;
+    loadTrack(currentTrack);
+});
+
+function loadTrack(trackIndex) {
+    if (tracks.length > 0) {
+        audioSource.src = tracks[trackIndex].src;
+        trackTitle.textContent = tracks[trackIndex].title;
+        audio.load();
+        audio.play();
+    }
+}
+
+function prevTrack() {
+    if (tracks.length > 0) {
+        currentTrack = (currentTrack > 0) ? currentTrack - 1 : tracks.length - 1;
+        loadTrack(currentTrack);
+    }
+}
+
+function nextTrack() {
+    if (tracks.length > 0) {
+        currentTrack = (currentTrack < tracks.length - 1) ? currentTrack + 1 : 0;
+        loadTrack(currentTrack);
+    }
+}
+
+function playPause() {
+    if (audio.paused) {
+        audio.play();
+    } else {
+        audio.pause();
+    }
+}
+
+bassControl.addEventListener('input', () => {
+    bassEQ.gain.value = bassControl.value;
+});
+
+midControl.addEventListener('input', () => {
+    midEQ.gain.value = midControl.value;
+});
+
+trebleControl.addEventListener('input', () => {
+    trebleEQ.gain.value = trebleControl.value;
+});
+
+// Spotify integration
+async function authenticateSpotify() {
+    const clientId = 'TU_CLIENT_ID';
+    const redirectUri = 'TU_REDIRECT_URI';
+    const scope = 'user-library-read playlist-read-private';
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
+
+    window.location = authUrl;
+}
+
+function getAccessToken() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return params.get('access_token');
+}
+
+async function fetchSpotifyPlaylists(accessToken) {
+    const response = await fetch('https://api.spotify.com/v1/me/playlists', {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+    const data = await response.json();
+    displaySpotifyPlaylists(data.items);
+}
+
+function displaySpotifyPlaylists(playlists) {
+    const spotifyPlaylist = document.getElementById('spotifyPlaylist');
+    spotifyPlaylist.innerHTML = '';
+
+    playlists.forEach(playlist => {
+        const li = document.createElement('li');
+        li.textContent = playlist.name;
+        li.addEventListener('click', () => {
+            fetchSpotifyPlaylistTracks(playlist.id);
+        });
+        spotifyPlaylist.appendChild(li);
+    });
+}
+
+async function fetchSpotifyPlaylistTracks(playlistId) {
+    const accessToken = getAccessToken();
+    const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+    const data = await response.json();
+    tracks = data.items.map(item => ({
+        title: item.track.name,
+        src: item.track.preview_url
+    })).filter(track => track.src);
+    currentTrack = 0;
+    loadTrack(currentTrack);
+}
+
+window.onload = () => {
+    const accessToken = getAccessToken();
+    if (accessToken) {
+        fetchSpotifyPlaylists(accessToken);
+    }
+};
